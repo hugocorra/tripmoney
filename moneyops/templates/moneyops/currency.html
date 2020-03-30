@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Currency</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description" content="A simple crud app made with the vue js and django">
+        <!-- bootstap -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+        <!-- boostrap css -->
+
+        <!-- vue.js files -->
+        <script src="https://cdn.jsdelivr.net/npm/vue@2.5.13/dist/vue.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/vue-resource@1.3.5"></script>
+
+        <script type="text/javascript">
+            window.onload = function () {
+                new Vue({
+                    el: '#workspace',
+                    delimiters: ['<%','%>'],
+                    data: {
+                        currencies: [],
+                        loading: false,
+                        currentCurrency: {},
+                        message: null,
+                        newCurrency: {'name': null},
+                    },
+                    mounted: function() {
+                        this.getCurrencies();
+                    },
+                    methods: {
+                        getCurrencies: function() {
+                            this.loading = true;
+                            this.$http.get('api/currency/').then((response) => {
+                                    this.currencies = response.data;
+                                    this.loading = false;
+                                }).catch((err) => {
+                                    this.loading = false;
+                                    console.log(err);
+                                })
+                        },
+                        getCurrency: function(id) {
+                            this.loading = true;
+                            this.$http.get('api/currency/' + id + '/').then((response) => {
+                                this.currentCurrency = response.data;
+                                this.loading = false;
+                            }).catch((err) => {
+                                this.loading = false;
+                                console.log(err);
+                            })
+                        },
+                        addCurrency: function() {
+                            this.loading = true;
+                            this.$http.post('api/currency/',this.newCurrency).then((response) => {
+                                this.loading = false;
+                                this.getCurrencies();
+                            }).catch((err) => {
+                                this.loading = false;
+                                console.log(err);
+                            })
+                        },
+                        updateCurrency: function() {
+                            this.loading = true;
+                            this.$http.put('api/currency/' + this.currentCurrency.id + '/', this.currentCurrency).then((response) => {
+                                this.loading = false;
+                                this.currentCurrency = response.data;
+                                this.getCurrencies();
+                            }).catch((err) => {
+                                this.loading = false;
+                                console.log(err);
+                            })
+                         },
+                        deleteCurrency: function(id) {
+                            this.loading = true;
+                            this.$http.delete('api/currency/' + id + '/').then((response) => {
+                                this.loading = false;
+                                this.getCurrencies();
+                            }).catch((err) => {
+                                this.loading = false;
+                                console.log(err);
+                            })
+                        }
+                    }
+                });
+            }
+        </script>
+    </head>
+    <body>
+        <!-- bootrtap js files -->
+        <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+
+        <div id="workspace">
+            <div class="container">
+                <div class="row">
+                    <h1>List of Currencies
+                        <button  type="button" class="btn btn-primary" data-toggle="modal" data-target="#addCurrencyModal">ADD CURRENCY</button>
+                    </h1>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Heading</th>
+                                <th scope="col">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="currency in currencies">
+                                <td><% currency.id %>
+                                <td><% currency.name %></td>
+                                <td>
+                                    <button class="btn btn-info" v-on:click="getCurrency(currency.id)">Edit</button>
+                                    <button class="btn btn-danger" v-on:click="deleteCurrency(currency.id)">Delete</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="loading" v-if="loading===true">Loading&#8230;</div>
+
+            <!-- Add Currency Modal -->
+            <div class="modal fade" id="addCurrencyModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="exampleModalLongTitle">ADD CURRENCY</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <form v-on:submit.prevent="addCurrency()">
+                            <div class="modal-body">
+                                <div class="form-group">
+                                    <label for="currency_name_input">Name</label>
+                                    <input
+                                        type="text"
+                                        class="form-control"
+                                        id="currency_name_input"
+                                        placeholder="Enter currency name"
+                                        v-model="newCurrency.name"
+                                        required="required" />
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                <button type="submit" class="btn btn-primary">Save changes</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <!-- End of currency modal -->
+
+            <div class="loading" v-if="loading===true">Loading&#8230;</div>          
+        </div>
+    </body>
+</html>
